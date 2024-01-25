@@ -63,6 +63,7 @@ router.delete("/user/delete/:id", checkMongoIdValidity, async (req, res) => {
   return res.status(200).send({ message: "User is deleted successfully." });
 });
 
+// edti user by id
 router.put(
   "/user/edit/:id",
   checkMongoIdValidity,
