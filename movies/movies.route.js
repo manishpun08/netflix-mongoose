@@ -1,90 +1,98 @@
 import express from "express";
+import { validateReqBody } from "../middleware/user.middleware.js";
+import { checkMongoIdValidity } from "../utils/check.mongo.id.validatiy.js";
 import { Movie } from "./movies.model.js";
-import mongoose from "mongoose";
+import { movieValidationSchema } from "./movies.validation.js";
 
 const router = express.Router();
 
-//add movie
-router.post("/movie/add", async (req, res) => {
-  console.log(req.body);
-  const newMovie = req.body;
+// add movie
+router.post(
+  "/movie/add",
+  validateReqBody(movieValidationSchema),
+  async (req, res) => {
+    const newMovie = req.body;
 
-  await Movie.create(newMovie);
+    await Movie.create(newMovie);
 
-  return res.status(201).send({ message: "Movie is added successfully." });
-});
-
-//get movie details by id
-router.get("/movie/details/:id", async (req, res) => {
-  //extract id from req.params
-  const movieId = req.params.id;
-  //check if id is valid for mongo id
-  const isValidMongoId = mongoose.Types.ObjectId.isValid(movieId);
-  //if not mongo id, throw error
-  if (!isValidMongoId) {
-    return res.status(400).send({ message: "Invalid mongo Id." });
+    return res.status(200).send({ message: "Movie is added successfully." });
   }
-  //find movie
-  const requiredMovie = await Movie.findOne({ _id: movieId });
-  //if not found, throw error
-  if (!requiredMovie) {
+);
+// get movie details
+
+router.get("/movie/details/:id", checkMongoIdValidity, async (req, res) => {
+  const movieId = req.params.id;
+
+  // find movie
+  const movie = await Movie.findOne({ _id: movieId });
+
+  // if not movie, throw error
+  if (!movie) {
     return res.status(404).send({ message: "Movie does not exist." });
   }
-  //send appropriate response
-  return res.status(200).send({ message: "Success", movie: requiredMovie });
+
+  // send movie details as response
+
+  return res.status(200).send(movie);
 });
-//delete movie by id
-router.delete("/movie/delete/:id", async (req, res) => {
-  //extract id from req.params
+// delete movie
+router.delete("/movie/delete/:id", checkMongoIdValidity, async (req, res) => {
+  // extract id from req.params
   const movieId = req.params.id;
-  //check if id is valid mongo id
-  const isValidMongoId = mongoose.Types.ObjectId.isValid(movieId);
-  //if not valid mongo id, throw error
-  if (!isValidMongoId) {
-    return res.status(400).send({ message: "Invalid movie id." });
+
+  // find movie
+  const movie = await Movie.findOne({ _id: movieId });
+
+  // if not movie, throw error
+  if (!movie) {
+    return res.status(404).send({ message: "Movie does not exist." });
   }
-  //find movie
-  const requiredMovie = await Movie.findOne({ _id: movieId });
-  //if not found, throw error
-  if (!requiredMovie) {
-    return res.status(404).send({ message: "Movie does not exits." });
-  }
-  //delete movie by id
+
+  // delete movie
   await Movie.deleteOne({ _id: movieId });
-  //send appropriate response
-  return res
-    .status(200)
-    .send({ message: "Movie is deleted successfully.", movie: requiredMovie });
-});
-//edit movie by id
-router.put("/movie/edit/:id", async (req, res) => {
-  //extract id from req.params
-  const movieId = req.params.id;
-  //check if id is valid mongo id
-  const isValidMongoId = mongoose.Types.ObjectId.isValid(movieId);
-  //if not, throw error
-  if (!isValidMongoId) {
-    return res.status(400).send({ message: "Invalid mongo id." });
-  }
-  //find movie
-  const requiredMovie = await Movie.findOne({ _id: movieId });
-  //if not found movie, throw error
-  if (!requiredMovie) {
-    return res.status(404).send({ message: "Movie does not exist." });
-  }
-  //extract new value from req.body
-  const newValues = req.body;
-  //update new value
-  await Movie.updateOne(
-    { _id: movieId },
-    {
-      $set: {
-        ...newValues,
-      },
-    }
-  );
 
-  //send appropriate response
-  return res.status(200).send({ message: "Movie is updated successfully." });
+  // send response
+  return res.status(200).send({ message: "Movie deleted successfully." });
+});
+// edit movie
+router.put(
+  "/movie/edit/:id",
+  checkMongoIdValidity,
+  validateReqBody(movieValidationSchema),
+  async (req, res) => {
+    // extract id from req.params
+    const movieId = req.params.id;
+
+    // extract new values from req.body
+    const newValues = req.body;
+
+    // find movie
+    const movie = await Movie.findOne({ _id: movieId });
+
+    // if not movie,throw error
+    if (!movie) {
+      return res.status(404).send({ message: "Movie does not exist." });
+    }
+
+    // edit movie
+    await Movie.updateOne(
+      { _id: movieId },
+      {
+        $set: {
+          ...newValues,
+        },
+      }
+    );
+
+    // send response
+
+    return res.status(200).send({ message: "Movie is updated successfully." });
+  }
+);
+
+//get all movie
+router.get("/movies", async (req, res) => {
+  const allMovies = await Movie.find();
+  return res.status(200).send(allMovies);
 });
 export default router;
