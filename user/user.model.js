@@ -22,6 +22,13 @@ const userSchema = new mongoose.Schema({
     trim: true,
     unique: true,
   },
+  password: {
+    type: String,
+    required: true,
+    max_length: 20,
+    min_length: 6,
+    trim: true,
+  },
   dob: {
     type: Date,
     required: false,

@@ -3,7 +3,7 @@ import { addUserSchema } from "./user.validation.js";
 import { User } from "./user.model.js";
 import { validateReqBody } from "../middleware/user.middleware.js";
 import { checkMongoIdValidity } from "../utils/check.mongo.id.validatiy.js";
-
+import * as bcrypt from "bcrypt";
 const router = express.Router();
 
 // add user
@@ -20,10 +20,16 @@ router.post("/user/add", validateReqBody(addUserSchema), async (req, res) => {
       .status(409)
       .send({ message: "User with this email already exists." });
   }
-  //create user
+
+  // hash password using bcrypt
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(newUser.password, saltRounds);
+  newUser.password = hashedPassword;
+
+  // create user
   await User.create(newUser);
-  //send proper response
-  return res.status(201).send({ message: "User is added successfully." });
+  // send response
+  return res.status(200).send({ message: "New user register successfully." });
 });
 
 //get user by id

@@ -9,6 +9,11 @@ export let addUserSchema = Yup.object({
     .trim()
     .max(55)
     .lowercase(),
+  password: Yup.string()
+    .required("Password must be required")
+    .max(20, "Password must be at max 20 character")
+    .min(6, "Password must be at min 6 character")
+    .trim(),
   dob: Yup.date().nullable(),
   gender: Yup.string().nullable().oneOf(["male", "female", "other"]),
 });
